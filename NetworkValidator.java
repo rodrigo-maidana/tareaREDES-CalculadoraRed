@@ -1,41 +1,18 @@
 public class NetworkValidator {
 
     public boolean isValidLongMask(String subnetMask) {
-        String[] parts = subnetMask.split("/");
-        if (parts.length == 2) {
-            String subnetMaskIP = parts[1];
-            String[] subnetMaskParts = subnetMaskIP.split("\\.");
+        String[] subnetMaskParts = subnetMask.split("\\.");
 
-            if (subnetMaskParts.length == 4) {
-                int byteAnterior = -1;
-                for (String parte : subnetMaskParts) {
-                    int octeto = Integer.parseInt(parte);
-                    if (octeto < 0 || octeto > 255 || (byteAnterior != -1 && octeto < byteAnterior)) {
-                        return false;
-                    }
-                    byteAnterior = octeto;
-                }
-                return true;
-            }
-        }
-
-        try {
-            String[] subnetMaskLarga = subnetMask.split("\\.");
-            if (subnetMaskLarga.length != 4) {
-                return false;
-            }
-            int subnetMaskCIDR = 0;
-            for (String parte : subnetMaskLarga) {
-                int octeto = Integer.parseInt(parte);
-                while (octeto > 0) {
-                    subnetMaskCIDR += octeto & 1;
-                    octeto >>= 1;
+        if (subnetMaskParts.length == 4) {
+            for (int i = 0; i < 4; i++) {
+                int octeto = Integer.parseInt(subnetMaskParts[i]);
+                if (octeto < 0 || octeto > 255) {
+                    return false; // Octeto fuera del rango válido
                 }
             }
-            return subnetMaskCIDR >= 0 && subnetMaskCIDR <= 32;
-        } catch (NumberFormatException e) {
-            return false;
+            return true; // Todos los octetos están en el rango válido
         }
+        return false; // No tiene 4 partes, no es una máscara válida en notación de punto decimal
     }
 
     public String convertSubnetMaskToPrefixLength(String subnetMask) {
