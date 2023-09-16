@@ -1,4 +1,18 @@
 # tareaREDES-CalculadoraRed
+Problemas:
+No logre realizar una validacion correcta de mascaras de red. si la mascara de red que se pasa es valida funciona, pero si no retorna el network y broadcast mal
+Por ej.
+
+CASOS DE EXITO
+java CalculadoraRed 192.168.0.5/255.255.255.0 (funciona sin problemas)
+java CalculadoraRed 192.168.0.5/255.255.255.128 (funciona sin problemas)
+
+CASOS DE FALLO
+java CalculadoraRed 192.168.0.5/1.1.1.1 (igualmente retorna un network y broadcast, pero como no es una mascara valida no es correcto)
+
+
+
+
 Su tarea es implementar una calculadora de Red, utilizando un lenguaje de programación Java
 
 Requerimientos:
