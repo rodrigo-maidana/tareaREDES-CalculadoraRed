@@ -1,118 +1,76 @@
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class CalculadoraRed {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownHostException {
+        NetworkValidator validator = new NetworkValidator();
         Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Ingrese la dirección IP y la máscara en formato IP/MASK: ");
+        System.out.print(
+                "Ingresa la dirección IP y la máscara de red (Ej. 192.168.0.16/24 o 192.168.0.16/255.255.255.0): ");
         String input = scanner.nextLine();
+        scanner.close();
 
         String[] parts = input.split("/");
-        String ipAddress = parts[0];
-        int mask;
+        if (parts.length != 2) {
+            System.err.println("Ingreso de datos incorrecto, debe ser dirección IP y máscara.");
+            return;
+        }
 
-        // Parsear la máscara en formato corto o largo
-        if (parts.length == 2) {
-            try {
-                mask = Integer.parseInt(parts[1]);
-            } catch (NumberFormatException e) {
-                System.out.println("Formato de máscara no válido.");
+        String ipAddress = parts[0];
+        String maskOrPrefix = parts[1];
+        int maskLength = 0;
+
+        if (maskOrPrefix.contains(".")) {
+            if (validator.isValidLongMask(maskOrPrefix)) {
+                maskLength = Integer.parseInt(validator.convertSubnetMaskToPrefixLength(maskOrPrefix));
+            } else {
+                System.err.println("La máscara en formato largo no es válida.");
                 return;
             }
         } else {
-            System.out.println("Formato de entrada no válido.");
-            return;
+            maskLength = Integer.parseInt(parts[1]);
         }
 
-        // Verificar que la máscara sea válida
-        if (mask < 0 || mask > 32) {
-            System.out.println("Máscara de red no válida.");
-            return;
-        }
-
-        // Calcular network y broadcast
-        String networkBinary = calculateNetwork(ipAddress, mask);
-        String broadcastBinary = calculateBroadcast(ipAddress, mask);
-
-        // Mostrar resultados en binario y decimal
-        System.out.println("Para el cálculo del Network:\n");
-        System.out.println("IP en binario: " + ipAddressToBinary(ipAddress));
-        System.out.println("Máscara en binario: " + maskToBinary(mask));
-        System.out.println("----------------------------");
-        System.out.println("Network en binario: " + networkBinary);
-        System.out.println("Network en decimal: " + binaryToDecimal(networkBinary));
-        System.out.println("\nPara el cálculo del Broadcast:\n");
-        System.out.println("IP en binario: " + ipAddressToBinary(ipAddress));
-        System.out.println("Complemento a uno de la máscara en binario: " + invertMask(mask));
-        System.out.println("----------------------------");
-        System.out.println("Broadcast en binario: " + broadcastBinary);
-        System.out.println("Broadcast en decimal: " + binaryToDecimal(broadcastBinary));
-    }
-
-    private static String calculateNetwork(String ipAddress, int mask) {
-        StringBuilder network = new StringBuilder();
         String[] ipParts = ipAddress.split("\\.");
+        if (ipParts.length != 4) {
+            System.err.println("La dirección IP debe tener 4 partes separadas por puntos.");
+            return;
+        }
+
+        byte[] ipBytes = new byte[4];
         for (int i = 0; i < 4; i++) {
             int octet = Integer.parseInt(ipParts[i]);
-            int maskBit = (mask >= 8) ? 8 : mask;
-            network.append(String.format("%8s", Integer.toBinaryString(octet)).replace(' ', '0').substring(0, maskBit));
-            mask -= maskBit;
-            if (mask <= 0)
-                break;
+            if (octet < 0 || octet > 255) {
+                System.err.println("Las partes de la dirección IP deben estar en el rango de 0 a 255.");
+                return;
+            }
+            ipBytes[i] = (byte) octet;
         }
-        while (network.length() < 32) {
-            network.append("0");
-        }
-        return network.toString();
+
+        System.out.println("Para el cálculo del Network::\n");
+
+        System.out.println("IP en binario: " + validator.ipToBinary(ipBytes));
+        int subnetMaskValue = validator.calculateSubnetMaskValue(maskLength);
+        byte[] subnetMaskBytes = validator.calculateSubnetMaskBytes(subnetMaskValue);
+        System.out.println("Máscara en binario: " + validator.ipToBinary(subnetMaskBytes));
+
+        System.out.println("----------------------------");
+        byte[] networkBytes = validator.calculateNetworkAddress(ipBytes, subnetMaskBytes);
+        System.out.println("Network en binario: " + validator.ipToBinary(networkBytes));
+        System.out.println("Network en decimal: " + InetAddress.getByAddress(networkBytes).getHostAddress());
+
+        System.out.println("\nPara el cálculo del Broadcast::\n");
+
+        System.out.println("IP en binario: " + validator.ipToBinary(ipBytes));
+        byte[] inverseSubnetMaskBytes = validator.calculateInverseSubnetMaskBytes(subnetMaskBytes);
+        System.out.println("Complemento a uno de Máscara en binario: " + validator.ipToBinary(inverseSubnetMaskBytes));
+
+        System.out.println("----------------------------");
+        byte[] broadcastBytes = validator.calculateBroadcastAddress(ipBytes, subnetMaskBytes);
+        System.out.println("Broadcast en binario: " + validator.ipToBinary(broadcastBytes));
+        System.out.println("Broadcast en decimal: " + InetAddress.getByAddress(broadcastBytes).getHostAddress());
     }
 
-    private static String calculateBroadcast(String ipAddress, int mask) {
-        String network = calculateNetwork(ipAddress, mask);
-        StringBuilder broadcast = new StringBuilder();
-        for (int i = 0; i < 32; i++) {
-            if (network.charAt(i) == '0')
-                broadcast.append("1");
-            else
-                broadcast.append("0");
-        }
-        return broadcast.toString();
-    }
-
-    private static String ipAddressToBinary(String ipAddress) {
-        String[] ipParts = ipAddress.split("\\.");
-        StringBuilder binary = new StringBuilder();
-        for (String part : ipParts) {
-            String partBinary = String.format("%8s", Integer.toBinaryString(Integer.parseInt(part)))
-                    .replace(' ', '0');
-            binary.append(partBinary);
-            binary.append(".");
-        }
-        return binary.deleteCharAt(binary.length() - 1).toString();
-    }
-
-    private static String maskToBinary(int mask) {
-        StringBuilder binary = new StringBuilder();
-        for (int i = 0; i < 32; i++) {
-            if (i < mask)
-                binary.append("1");
-            else
-                binary.append("0");
-        }
-        return binary.toString();
-    }
-
-    private static String invertMask(int mask) {
-        StringBuilder invertedMask = new StringBuilder();
-        for (int i = 0; i < 32; i++) {
-            if (i < mask)
-                invertedMask.append("0");
-            else
-                invertedMask.append("1");
-        }
-        return invertedMask.toString();
-    }
-
-    private static int binaryToDecimal(String binary) {
-        return Integer.parseInt(binary, 2);
-    }
 }
