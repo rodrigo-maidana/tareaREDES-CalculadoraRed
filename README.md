@@ -10,6 +10,7 @@ java CalculadoraRed 192.168.0.5/255.255.255.0 (funciona sin problemas)
 java CalculadoraRed 192.168.0.5/255.255.255.128 (funciona sin problemas)
 
 CASOS DE FALLO
+
 java CalculadoraRed 192.168.0.5/1.1.1.1 (igualmente retorna un network y broadcast, pero como no es una mascara valida no es correcto)
 
 
