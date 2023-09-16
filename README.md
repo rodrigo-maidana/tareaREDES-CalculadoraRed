@@ -4,6 +4,7 @@ No logre realizar una validacion correcta de mascaras de red. si la mascara de r
 Por ej.
 
 CASOS DE EXITO
+
 java CalculadoraRed 192.168.0.5/255.255.255.0 (funciona sin problemas)
 
 java CalculadoraRed 192.168.0.5/255.255.255.128 (funciona sin problemas)
