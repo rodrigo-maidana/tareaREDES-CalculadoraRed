@@ -1,6 +1,6 @@
 # tareaREDES-CalculadoraRed
 Problemas:
-No logre realizar una validacion correcta de mascaras de red. si la mascara de red que se pasa es valida funciona, pero si no retorna el network y broadcast mal
+No logre realizar una validacion correcta de mascaras de red. si la mascara de red que se pasa es valida funciona, pero si no lo es retorna el network y broadcast mal
 Por ej.
 
 CASOS DE EXITO
